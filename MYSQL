@@ -1,0 +1,21 @@
+CREATE DATABASE currency_converter;
+USE currency_converter;
+CREATE TABLE exchange_rates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    currency_from VARCHAR(10) NOT NULL,
+    currency_to VARCHAR(10) NOT NULL,
+    rate DECIMAL(10, 6) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO exchange_rates (currency_from, currency_to, rate)
+VALUES 
+('USD', 'INR', 83.23),
+('EUR', 'INR', 88.45),
+('GBP', 'INR', 101.75),
+('INR', 'USD', 0.012),
+('INR', 'EUR', 0.011),
+('INR', 'GBP', 0.0098),
+('USD', 'EUR', 0.94),
+('EUR', 'USD', 1.06),
+('GBP', 'USD', 1.22);
+SELECT * FROM exchange_rates;
