@@ -1,0 +1,105 @@
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+public class CurrencyConverterApp extends Application {
+
+    private static final String URL = "jdbc:mysql://localhost:3306/currency_converter";
+    private static final String USER = "root";  // Replace with your MySQL username
+    private static final String PASSWORD = "password";  // Replace with your MySQL password
+
+    // Method to connect to MySQL database
+    public static Connection connect() {
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println("Connected to the database!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return conn;
+    }
+
+    // Method to retrieve exchange rate from the database
+    public double getExchangeRate(String fromCurrency, String toCurrency) {
+        double rate = 0;
+        try (Connection conn = connect()) {
+            Statement stmt = conn.createStatement();
+            String query = "SELECT rate FROM exchange_rates WHERE currency_from = '" + fromCurrency + "' AND currency_to = '" + toCurrency + "'";
+            ResultSet rs = stmt.executeQuery(query);
+            if (rs.next()) {
+                rate = rs.getDouble("rate");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rate;
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Currency Converter");
+
+        // Create input fields
+        Label amountLabel = new Label("Amount:");
+        TextField amountField = new TextField();
+
+        Label fromCurrencyLabel = new Label("From:");
+        ComboBox<String> fromCurrencyBox = new ComboBox<>();
+        fromCurrencyBox.getItems().addAll("USD", "EUR", "GBP", "INR");
+
+        Label toCurrencyLabel = new Label("To:");
+        ComboBox<String> toCurrencyBox = new ComboBox<>();
+        toCurrencyBox.getItems().addAll("USD", "EUR", "GBP", "INR");
+
+        Button convertButton = new Button("Convert");
+        Label resultLabel = new Label("Converted Amount: ");
+
+        // Layout
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(amountLabel, amountField, fromCurrencyLabel, fromCurrencyBox, toCurrencyLabel, toCurrencyBox, convertButton, resultLabel);
+
+        // Set up the scene
+        Scene scene = new Scene(layout, 300, 250);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        // Conversion logic
+        convertButton.setOnAction(e -> {
+            try {
+                double amount = Double.parseDouble(amountField.getText());
+                String fromCurrency = fromCurrencyBox.getValue();
+                String toCurrency = toCurrencyBox.getValue();
+
+                if (fromCurrency == null || toCurrency == null) {
+                    resultLabel.setText("Please select both currencies!");
+                    return;
+                }
+
+                double rate = getExchangeRate(fromCurrency, toCurrency);
+                if (rate == 0) {
+                    resultLabel.setText("Exchange rate not available!");
+                } else {
+                    double convertedAmount = amount * rate;
+                    resultLabel.setText("Converted Amount: " + convertedAmount);
+                }
+            } catch (NumberFormatException ex) {
+                resultLabel.setText("Please enter a valid number!");
+            } catch (Exception ex) {
+                resultLabel.setText("Error occurred!");
+                ex.printStackTrace();
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
